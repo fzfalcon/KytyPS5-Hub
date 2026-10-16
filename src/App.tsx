@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import {
   Activity, AlertCircle, ArrowDownToLine, Check, CheckCircle2, ChevronRight,
   CircleHelp, ExternalLink, Folder, FolderOpen, Gamepad2, Github, HardDrive,
@@ -39,20 +40,25 @@ type Source = {
 };
 type AppConfig = { base_dir: string | null };
 type DownloadResult = { saved_files: string[]; folder: string; message: string };
+type DownloadRecord = {
+  source_id: string; owner: string; repo: string; tag: string; folder: string;
+  files: string[]; completed_at: string; extracted_folder: string | null;
+};
+type DownloadManifest = { records: DownloadRecord[] };
 
 const sourceDefaults: Source[] = [
   {
-    id: "wolverine", title: "Wolverine", game: "EXPERIMENTAL BRANCH",
-    owner: "Senaxx", repo: "KytyPS5", description: "Senaxx community build",
+    id: "wolverine", title: "Senaxx", game: "WOLVERINE EXPERIMENTAL BUILDS",
+    owner: "Senaxx", repo: "KytyPS5", description: "Wolverine experimental branch",
     accent: "amber", release: null, status: "idle",
   },
   {
-    id: "astro-bot", title: "Astro Bot", game: "EXPERIMENTAL BRANCH",
-    owner: "Jetsku", repo: "KytyPS5", description: "Jetsku community build",
+    id: "astro-bot", title: "Jetsku", game: "ASTRO BOT EXPERIMENTAL BUILDS",
+    owner: "Jetsku", repo: "KytyPS5", description: "Astro Bot experimental branch",
     accent: "blue", release: null, status: "idle",
   },
   {
-    id: "official", title: "Official", game: "UPSTREAM",
+    id: "official", title: "Official KytyPS5", game: "UPSTREAM RELEASES",
     owner: "KytyPS5", repo: "KytyPS5", description: "Official upstream repository",
     accent: "violet", release: null, status: "idle",
   },
@@ -80,13 +86,18 @@ export default function App() {
   const [notice, setNotice] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [platform, setPlatform] = useState("windows");
+  const [history, setHistory] = useState<DownloadRecord[]>([]);
+  const [launchChoices, setLaunchChoices] = useState<{ sourceId: string; folder: string; paths: string[] } | null>(null);
 
   const refreshConfig = useCallback(async () => {
     try {
       const next = await invoke<AppConfig>("get_config");
       setConfig(next);
+      const manifest = await invoke<DownloadManifest>("get_download_history");
+      setHistory(manifest.records ?? []);
     } catch (error) {
-      setNotice({ kind: "error", text: `Could not load settings: ${String(error)}` });
+      setNotice({ kind: "error", text: `Could not load settings/history: ${String(error)}` });
     }
   }, []);
 
@@ -135,13 +146,24 @@ export default function App() {
     }
   };
 
+  const platformMatches = (name: string) => {
+    const n = name.toLowerCase();
+    if (platform === "all") return true;
+    if (platform === "windows") {
+      // Prefer clearly labelled Windows assets, but keep generic assets because many projects use generic names.
+      return /windows|win64|win-x64|win_x64|x64|amd64|\.exe|\.zip/i.test(n) || !/linux|\.deb|\.rpm|\.appimage|\.dmg|\.pkg|\.apk|\.ipa/i.test(n);
+    }
+    return /linux|\.appimage|\.deb|\.rpm|\.tar\.gz|\.tar\.xz/i.test(n);
+  };
+
   const downloadSource = async (source: Source) => {
     if (!source.release) {
       setNotice({ kind: "error", text: "No published release is available for this source. A development-build workflow can be added separately if the repository exposes CI artifacts." });
       return;
     }
-    if (!source.release.assets.length) {
-      setNotice({ kind: "error", text: `${source.title}: this release has no attached downloadable assets. Open the release page to inspect its source or build instructions.` });
+    const selectedAssets = source.release.assets.filter(a => platformMatches(a.name));
+    if (!selectedAssets.length) {
+      setNotice({ kind: "error", text: `${source.title}: no assets matched ${platform === "windows" ? "Windows x64" : platform === "linux" ? "Linux" : "the selected filter"}. Choose “All assets” to inspect every download.` });
       return;
     }
     if (!config.base_dir) {
@@ -156,10 +178,23 @@ export default function App() {
       const result = await invoke<DownloadResult>("download_release", {
         owner: source.owner, repo: source.repo,
         tag: source.release.tag_name, sourceId: source.id,
-        assets: source.release.assets.map(a => ({ name: a.name, download_url: a.browser_download_url })),
+        assets: selectedAssets.map(a => ({ name: a.name, download_url: a.browser_download_url })),
       });
+      let extractedFolder: string | null = null;
+      const zipFile = result.saved_files.find(path => path.toLowerCase().endsWith(".zip"));
+      if (zipFile) {
+        try {
+          extractedFolder = await invoke<string>("extract_archive", {
+            sourceId: source.id, tag: source.release.tag_name, archivePath: zipFile,
+          });
+        } catch (extractError) {
+          setNotice({ kind: "info", text: `Downloaded successfully, but automatic extraction was skipped: ${String(extractError)}` });
+        }
+      }
+      const manifest = await invoke<DownloadManifest>("get_download_history");
+      setHistory(manifest.records ?? []);
       setSources(current => current.map(s => s.id === source.id ? { ...s, status: "ready", progress: 100 } : s));
-      setNotice({ kind: "success", text: `${source.title} downloaded. ${result.saved_files.length} file(s) saved to ${result.folder}` });
+      setNotice({ kind: "success", text: `${source.title} downloaded. ${result.saved_files.length} file(s) saved. ${extractedFolder ? "ZIP extracted." : "Open the folder to inspect the downloaded files."}` });
     } catch (error) {
       setSources(current => current.map(s => s.id === source.id ? { ...s, status: "error", message: String(error) } : s));
       setNotice({ kind: "error", text: `Download failed: ${String(error)}` });
@@ -177,6 +212,9 @@ export default function App() {
 
   const readyCount = useMemo(() => sources.filter(s => s.release).length, [sources]);
   const assetCount = useMemo(() => sources.reduce((n, s) => n + (s.release?.assets.length ?? 0), 0), [sources]);
+  const isDownloaded = (source: Source) => !!source.release && history.some(r =>
+    r.source_id === source.id && r.tag === source.release!.tag_name &&
+    r.files.length > 0 && r.files.every(file => file.toLowerCase().endsWith(".part") ? false : true));
 
   return (
     <main className="app-shell">
@@ -237,7 +275,16 @@ export default function App() {
 
           <div className="section-heading">
             <div><h2>Tracked sources</h2><p>Latest published release, including prereleases when available.</p></div>
-            <span className="updated-label">{lastChecked ? `Last checked ${new Date(lastChecked).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not checked yet"}</span>
+            <div className="section-controls">
+              <label className="platform-label">Platform
+                <select value={platform} onChange={e => setPlatform(e.target.value)} className="platform-select">
+                  <option value="windows">Windows x64 (default)</option>
+                  <option value="linux">Linux x64</option>
+                  <option value="all">Show all assets</option>
+                </select>
+              </label>
+              <span className="updated-label">{lastChecked ? `Last checked ${new Date(lastChecked).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not checked yet"}</span>
+            </div>
           </div>
 
           <div className="source-grid">
@@ -249,12 +296,13 @@ export default function App() {
                   {source.status === "checking" ? <><LoaderCircle size={12} className="spin" /> Checking</> :
                    source.status === "downloading" ? <><LoaderCircle size={12} className="spin" /> Downloading</> :
                    source.status === "error" ? <><AlertCircle size={12} /> Error</> :
-                   release ? <><CheckCircle2 size={12} /> Release found</> : source.status === "empty" ? "No release" : "Waiting"}
+                   isDownloaded(source) ? <><CheckCircle2 size={12} /> Up to date</> :
+                   release ? <><ArrowDownToLine size={12} /> Update available</> : source.status === "empty" ? "No release" : "Waiting"}
                 </span></div>
                 <div className="source-label">{source.game}</div>
                 <h3>{source.title}</h3>
                 <p className="source-description">{source.description}</p>
-                <a className="repo-link" href={repoUrl(source)} target="_blank" rel="noreferrer"><Github size={14} /> {source.owner}/{source.repo} <ExternalLink size={12} /></a>
+                <button className="repo-link repo-link-button" onClick={() => void openUrl(repoUrl(source)).catch(error => setNotice({ kind: "error", text: `Could not open repository: ${String(error)}` }))}><Github size={14} /> {source.owner}/{source.repo} <ExternalLink size={12} /></button>
                 <div className="release-panel">
                   {release ? <>
                     <div className="release-row"><span>Latest release</span><span className={`release-type ${release.prerelease ? "pre" : "stable"}`}>{release.prerelease ? "PRERELEASE" : "STABLE"}</span></div>
@@ -269,11 +317,45 @@ export default function App() {
                     {isBusy ? <LoaderCircle className="spin" size={16} /> : <ArrowDownToLine size={16} />}
                     {isBusy ? "Downloading…" : "Download release"}
                   </button>
-                  {release && <button className="icon-button" title="Open release page" onClick={() => window.open(release.html_url, "_blank", "noopener,noreferrer")}><ExternalLink size={16} /></button>}
+                  {release && <button className="icon-button" title="Open release page" onClick={() => void openUrl(release.html_url).catch(error => setNotice({ kind: "error", text: `Could not open release page: ${String(error)}` }))}><ExternalLink size={16} /></button>}
                 </div>
+                {isDownloaded(source) && <div className="post-download-actions">
+                  <button className="button secondary small" onClick={() => {
+                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name);
+                    if (record) void openPath(record.folder).catch(error => setNotice({ kind: "error", text: `Could not open folder: ${String(error)}` }));
+                  }}><FolderOpen size={14} /> Open folder</button>
+                  <button className="button secondary small" onClick={async () => {
+                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name);
+                    if (!record) return;
+                    const folder = record.extracted_folder || record.folder;
+                    try {
+                      const paths = await invoke<string[]>("find_executables", { folder });
+                      if (!paths.length) {
+                        setNotice({ kind: "info", text: "No .exe was detected in this build. Open the folder and check the repository's launch instructions." });
+                      } else if (paths.length === 1) {
+                        await invoke("launch_executable", { path: paths[0] });
+                        setNotice({ kind: "success", text: "Emulator launched." });
+                      } else {
+                        setLaunchChoices({ sourceId: source.id, folder, paths });
+                      }
+                    } catch (error) {
+                      setNotice({ kind: "error", text: `Could not launch build: ${String(error)}` });
+                    }
+                  }}><Gamepad2 size={14} /> Launch emulator</button>
+                </div>}
               </article>;
             })}
           </div>
+
+          <section className="panel history-panel">
+            <div className="panel-heading"><div><h3>Recent downloads</h3><p>Download history is saved between app launches.</p></div><FolderOpen size={18} /></div>
+            {history.length === 0 ? <p className="history-empty">No downloads yet. Download a release to build your local library.</p> :
+              [...history].reverse().slice(0, 5).map(record => <div className="history-row" key={`${record.source_id}-${record.tag}`}>
+                <div className="history-icon"><CheckCircle2 size={16} /></div>
+                <div className="history-details"><strong>{record.owner} · {record.tag}</strong><span>{record.files.length} file(s) · {record.extracted_folder ? "Extracted" : "Downloaded"} · {record.folder}</span></div>
+                <button className="icon-button" title="Open build folder" onClick={() => void openPath(record.extracted_folder || record.folder).catch(error => setNotice({ kind: "error", text: String(error) }))}><FolderOpen size={15} /></button>
+              </div>)}
+          </section>
 
           <div className="bottom-grid">
             <section className="panel">
@@ -292,6 +374,18 @@ export default function App() {
           <footer className="page-footer"><span>KytyPS5 Hub · Community build manager</span><span>Repository metadata supplied by GitHub</span></footer>
         </div>
       </section>
+
+      {launchChoices && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setLaunchChoices(null); }}>
+        <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="launch-title">
+          <div className="modal-header"><div className="modal-title-icon"><Gamepad2 size={20} /></div><div><h2 id="launch-title">Choose executable</h2><p>This build contains multiple Windows executables.</p></div><button className="icon-button" onClick={() => setLaunchChoices(null)} aria-label="Close"><X size={18} /></button></div>
+          <div className="settings-content launch-list">
+            {launchChoices.paths.map(path => <button key={path} className="launch-option" onClick={async () => {
+              try { await invoke("launch_executable", { path }); setLaunchChoices(null); setNotice({ kind: "success", text: "Executable launched." }); }
+              catch (error) { setNotice({ kind: "error", text: String(error) }); }
+            }}><Gamepad2 size={15} /><span>{path}</span><ExternalLink size={13} /></button>)}
+          </div>
+        </section>
+      </div>}
 
       {settingsOpen && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setSettingsOpen(false); }}>
         <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">

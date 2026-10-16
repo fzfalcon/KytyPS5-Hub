@@ -67,3 +67,8 @@ The app downloads only HTTPS release assets whose URL host is `github.com`. GitH
 ## License
 
 MIT. See `LICENSE`.
+
+
+## Version 0.2.0 upgrade
+
+See `UPGRADE-NOTES.md` for newly added download history, concurrent downloads, safe ZIP extraction, and executable discovery/launch commands.
