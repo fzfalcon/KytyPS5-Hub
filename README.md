@@ -1,4 +1,4 @@
-# KytyPS5 Hub
+# KytyPS5 Updater
 
 A Windows desktop release manager for three KytyPS5 repositories:
 
@@ -28,12 +28,12 @@ A Windows desktop release manager for three KytyPS5 repositories:
 
 ## Build without local CMD
 
-1. Create a new GitHub repository named `KytyPS5-Hub`.
+1. Create a new GitHub repository named `KytyPS5-Updater`.
 2. Upload the complete contents of this project to the repository's `main` branch.
 3. Open **Actions** and enable workflows if GitHub asks.
-4. Select **Build KytyPS5 Hub for Windows** and click **Run workflow**, or push a commit to `main`.
-5. Open the successful workflow run and download the `KytyPS5-Hub-Windows-x64` artifact.
-6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Hub-Portable.exe`.
+4. Select **Build KytyPS5 Updater for Windows** and click **Run workflow**, or push a commit to `main`.
+5. Open the successful workflow run and download the `KytyPS5-Updater-Windows-x64` artifact.
+6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Updater-Portable.exe`.
 
 The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a package-lock.json is committed, avoiding setup-node cache failures. The Vite TypeScript configuration includes `@types/node` for Node globals such as `process`. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
 

@@ -1,12 +1,12 @@
 [package]
-name = "kytyps5-hub"
-version = "0.2.0"
+name = "kytyps5-updater"
+version = "0.3.0"
 description = "Multi-source KytyPS5 release manager"
 authors = ["KytyPS5 Hub contributors"]
 edition = "2021"
 
 [lib]
-name = "kytyps5_hub_lib"
+name = "kytyps5_updater_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -24,3 +24,5 @@ futures-util = "0.3"
 dirs = "6"
 sanitize-filename = "0.6"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+
+open = "5"

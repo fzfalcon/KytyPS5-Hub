@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+
 import {
   Activity, AlertCircle, ArrowDownToLine, Check, CheckCircle2, ChevronRight,
   CircleHelp, ExternalLink, Folder, FolderOpen, Gamepad2, Github, HardDrive,
@@ -89,6 +89,8 @@ export default function App() {
   const [platform, setPlatform] = useState("windows");
   const [history, setHistory] = useState<DownloadRecord[]>([]);
   const [launchChoices, setLaunchChoices] = useState<{ sourceId: string; folder: string; paths: string[] } | null>(null);
+  const [startupUpdates, setStartupUpdates] = useState<Source[]>([]);
+  const [startupPromptDismissed, setStartupPromptDismissed] = useState(false);
 
   const refreshConfig = useCallback(async () => {
     try {
@@ -118,6 +120,27 @@ export default function App() {
       const result = results.find(r => r.id === source.id)!;
       return { ...source, release: result.release, status: result.status, message: result.message };
     }));
+    try {
+      const manifest = await invoke<DownloadManifest>("get_download_history");
+      setHistory(manifest.records ?? []);
+      const newBuilds = sourceDefaults.flatMap(source => {
+        const result = results.find(r => r.id === source.id);
+        if (!result?.release || !result.release.assets.some(asset => {
+          const n = asset.name.toLowerCase();
+          return !/(macos|mac-os|darwin|osx|linux|\\.dmg|\\.pkg|\\.appimage|\\.deb|\\.rpm)/i.test(n);
+        })) return [];
+        const alreadyDownloaded = (manifest.records ?? []).some(record =>
+          record.source_id === source.id && record.tag === result.release!.tag_name &&
+          record.platform === "windows" && record.files.length > 0);
+        return alreadyDownloaded ? [] : [{ ...source, release: result.release, status: "ready" as const }];
+      });
+      if (newBuilds.length > 0) {
+        setStartupUpdates(newBuilds);
+        setStartupPromptDismissed(false);
+      }
+    } catch {
+      // Update discovery remains useful even if history cannot be read.
+    }
     const errors = results.filter(r => r.status === "error").length;
     const found = results.filter(r => r.release).length;
     setLastChecked(new Date().toISOString());
@@ -135,7 +158,7 @@ export default function App() {
 
   const chooseFolder = async () => {
     try {
-      const selected = await openDialog({ directory: true, multiple: false, title: "Choose KytyPS5 Hub download drive/folder" });
+      const selected = await openDialog({ directory: true, multiple: false, title: "Choose KytyPS5 Updater download drive/folder" });
       if (typeof selected !== "string") return;
       await invoke("set_base_dir", { path: selected });
       setConfig({ base_dir: selected });
@@ -149,11 +172,18 @@ export default function App() {
   const platformMatches = (name: string) => {
     const n = name.toLowerCase();
     if (platform === "all") return true;
+    const isMac = /macos|mac-os|darwin|osx|\.dmg|\.pkg|\.app/i.test(n);
+    const isLinux = /linux|\.appimage|\.deb|\.rpm|\.tar\.gz|\.tar\.xz/i.test(n);
+    const isWindows = /windows|win64|win-x64|win_x64|win32|\.exe|msvc/i.test(n);
     if (platform === "windows") {
-      // Prefer clearly labelled Windows assets, but keep generic assets because many projects use generic names.
-      return /windows|win64|win-x64|win_x64|x64|amd64|\.exe|\.zip/i.test(n) || !/linux|\.deb|\.rpm|\.appimage|\.dmg|\.pkg|\.apk|\.ipa/i.test(n);
+      if (isMac || isLinux) return false;
+      return isWindows || !/(macos|mac-os|darwin|osx|linux|\.dmg|\.pkg|\.appimage|\.deb|\.rpm|\.apk|\.ipa)/i.test(n);
     }
-    return /linux|\.appimage|\.deb|\.rpm|\.tar\.gz|\.tar\.xz/i.test(n);
+    if (platform === "linux") {
+      if (isMac || isWindows) return false;
+      return isLinux;
+    }
+    return true;
   };
 
   const downloadSource = async (source: Source) => {
@@ -177,7 +207,7 @@ export default function App() {
     try {
       const result = await invoke<DownloadResult>("download_release", {
         owner: source.owner, repo: source.repo,
-        tag: source.release.tag_name, sourceId: source.id,
+        tag: source.release.tag_name, sourceId: source.id, platform,
         assets: selectedAssets.map(a => ({ name: a.name, download_url: a.browser_download_url })),
       });
       let extractedFolder: string | null = null;
@@ -214,14 +244,14 @@ export default function App() {
   const assetCount = useMemo(() => sources.reduce((n, s) => n + (s.release?.assets.length ?? 0), 0), [sources]);
   const isDownloaded = (source: Source) => !!source.release && history.some(r =>
     r.source_id === source.id && r.tag === source.release!.tag_name &&
-    r.files.length > 0 && r.files.every(file => file.toLowerCase().endsWith(".part") ? false : true));
+    r.platform === platform && r.files.length > 0 && r.files.every(file => !file.toLowerCase().endsWith(".part")));
 
   return (
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark"><Gamepad2 size={24} /></div>
-          <div><div className="brand-name">KytyPS5 <span>Hub</span></div><div className="brand-subtitle">MULTI-SOURCE MANAGER</div></div>
+          <div><div className="brand-name">KytyPS5 <span>Hub</span></div><div className="brand-subtitle">MULTI-SOURCE BUILD UPDATER</div></div>
         </div>
         <div className="nav-label">WORKSPACE</div>
         <div className="nav-item active"><Activity size={17} /> Overview</div>
@@ -231,7 +261,7 @@ export default function App() {
           <ShieldCheck size={18} />
           <div><strong>Source-aware updates</strong><p>Each repository is tracked independently. Existing builds are not overwritten by this downloader.</p></div>
         </div>
-        <div className="sidebar-footer"><span className="status-dot" /> Windows desktop · v0.1.0</div>
+        <div className="sidebar-footer"><span className="status-dot" /> Windows desktop · v0.3.0</div>
       </aside>
 
       <section className="main-content">
@@ -249,7 +279,7 @@ export default function App() {
           <div className="hero">
             <div>
               <div className="eyebrow"><Sparkles size={13} /> YOUR EMULATOR BUILDS, IN ONE PLACE</div>
-              <h1>KytyPS5 Hub</h1>
+              <h1>KytyPS5 Updater</h1>
               <p>Track the latest releases from three independent KytyPS5 sources. Review build details and keep each download neatly separated.</p>
               <div className="hero-buttons">
                 <button className="button primary" onClick={() => void checkAll()} disabled={checking}>
@@ -302,7 +332,7 @@ export default function App() {
                 <div className="source-label">{source.game}</div>
                 <h3>{source.title}</h3>
                 <p className="source-description">{source.description}</p>
-                <button className="repo-link repo-link-button" onClick={() => void openUrl(repoUrl(source)).catch(error => setNotice({ kind: "error", text: `Could not open repository: ${String(error)}` }))}><Github size={14} /> {source.owner}/{source.repo} <ExternalLink size={12} /></button>
+                <button className="repo-link repo-link-button" onClick={() => void invoke("open_external_url", { url: repoUrl(source) }).catch(error => setNotice({ kind: "error", text: `Could not open repository: ${String(error)}` }))}><Github size={14} /> {source.owner}/{source.repo} <ExternalLink size={12} /></button>
                 <div className="release-panel">
                   {release ? <>
                     <div className="release-row"><span>Latest release</span><span className={`release-type ${release.prerelease ? "pre" : "stable"}`}>{release.prerelease ? "PRERELEASE" : "STABLE"}</span></div>
@@ -317,15 +347,15 @@ export default function App() {
                     {isBusy ? <LoaderCircle className="spin" size={16} /> : <ArrowDownToLine size={16} />}
                     {isBusy ? "Downloading…" : "Download release"}
                   </button>
-                  {release && <button className="icon-button" title="Open release page" onClick={() => void openUrl(release.html_url).catch(error => setNotice({ kind: "error", text: `Could not open release page: ${String(error)}` }))}><ExternalLink size={16} /></button>}
+                  {release && <button className="icon-button" title="Open release page" onClick={() => void invoke("open_external_url", { url: release.html_url }).catch(error => setNotice({ kind: "error", text: `Could not open release page: ${String(error)}` }))}><ExternalLink size={16} /></button>}
                 </div>
                 {isDownloaded(source) && <div className="post-download-actions">
                   <button className="button secondary small" onClick={() => {
-                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name);
-                    if (record) void openPath(record.folder).catch(error => setNotice({ kind: "error", text: `Could not open folder: ${String(error)}` }));
+                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name && r.platform === platform);
+                    if (record) void invoke("open_folder", { path: record.folder }).catch(error => setNotice({ kind: "error", text: `Could not open folder: ${String(error)}` }));
                   }}><FolderOpen size={14} /> Open folder</button>
                   <button className="button secondary small" onClick={async () => {
-                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name);
+                    const record = history.find(r => r.source_id === source.id && r.tag === source.release?.tag_name && r.platform === platform);
                     if (!record) return;
                     const folder = record.extracted_folder || record.folder;
                     try {
@@ -353,7 +383,7 @@ export default function App() {
               [...history].reverse().slice(0, 5).map(record => <div className="history-row" key={`${record.source_id}-${record.tag}`}>
                 <div className="history-icon"><CheckCircle2 size={16} /></div>
                 <div className="history-details"><strong>{record.owner} · {record.tag}</strong><span>{record.files.length} file(s) · {record.extracted_folder ? "Extracted" : "Downloaded"} · {record.folder}</span></div>
-                <button className="icon-button" title="Open build folder" onClick={() => void openPath(record.extracted_folder || record.folder).catch(error => setNotice({ kind: "error", text: String(error) }))}><FolderOpen size={15} /></button>
+                <button className="icon-button" title="Open build folder" onClick={() => void invoke("open_folder", { path: record.extracted_folder || record.folder }).catch(error => setNotice({ kind: "error", text: String(error) }))}><FolderOpen size={15} /></button>
               </div>)}
           </section>
 
@@ -371,9 +401,23 @@ export default function App() {
           </div>
 
           {notice && <div className={`notice ${notice.kind}`}><span>{notice.kind === "error" ? <AlertCircle size={17} /> : notice.kind === "success" ? <CheckCircle2 size={17} /> : <Activity size={17} />}{notice.text}</span><button onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button></div>}
-          <footer className="page-footer"><span>KytyPS5 Hub · Community build manager</span><span>Repository metadata supplied by GitHub</span></footer>
+          <footer className="page-footer"><span>KytyPS5 Updater · Community build manager</span><span>Repository metadata supplied by GitHub</span></footer>
         </div>
       </section>
+
+      {startupUpdates.length > 0 && !startupPromptDismissed && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setStartupPromptDismissed(true); }}>
+        <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="startup-title">
+          <div className="modal-header"><div className="modal-title-icon"><Sparkles size={20} /></div><div><h2 id="startup-title">New KytyPS5 builds found</h2><p>These latest Windows builds are not in your download history.</p></div><button className="icon-button" onClick={() => setStartupPromptDismissed(true)} aria-label="Close"><X size={18} /></button></div>
+          <div className="settings-content">
+            {startupUpdates.map(source => <div className="startup-update-row" key={source.id}>
+              <div className="startup-update-info"><strong>{source.title}</strong><span>{source.release?.name || source.release?.tag_name}</span><small>{source.release?.assets.filter(asset => platformMatches(asset.name)).length ?? 0} Windows-matching asset(s)</small></div>
+              <button className="button primary small" disabled={!source.release?.assets.some(asset => platformMatches(asset.name)) || !!busyId} onClick={async () => { await downloadSource(source); setStartupUpdates(current => current.filter(s => s.id !== source.id)); if (startupUpdates.length <= 1) setStartupPromptDismissed(true); }}><ArrowDownToLine size={14} /> Download</button>
+            </div>)}
+            <p className="settings-help">Choose Download to start immediately, or close this window and download later. Asset filtering is based on published filenames.</p>
+          </div>
+          <div className="modal-footer"><button className="button secondary" onClick={() => setStartupPromptDismissed(true)}>Later</button><button className="button primary" onClick={async () => { for (const source of startupUpdates) { if (source.release?.assets.some(asset => platformMatches(asset.name))) await downloadSource(source); } setStartupUpdates([]); setStartupPromptDismissed(true); }}>Download all</button></div>
+        </section>
+      </div>}
 
       {launchChoices && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setLaunchChoices(null); }}>
         <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="launch-title">
@@ -394,8 +438,8 @@ export default function App() {
             <label>Base download folder</label>
             <div className="folder-picker"><span>{config.base_dir || "Select a drive or folder…"}</span><button className="button secondary small" onClick={() => void chooseFolder()}><FolderOpen size={15} /> Browse</button></div>
             <div className="folder-preview">
-              <div><Folder size={15} /><span>Wolverine</span><code>Senaxx/KytyPS5</code></div>
-              <div><Folder size={15} /><span>Astro Bot</span><code>Jetsku/KytyPS5</code></div>
+              <div><Folder size={15} /><span>Senaxx</span><code>Senaxx/KytyPS5</code></div>
+              <div><Folder size={15} /><span>Jetsku</span><code>Jetsku/KytyPS5</code></div>
               <div><Folder size={15} /><span>Official</span><code>KytyPS5/KytyPS5</code></div>
             </div>
             <p className="settings-help">Each download is placed under its source folder and release tag. The app stores its folder setting in the Windows app configuration directory.</p>

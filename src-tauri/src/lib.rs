@@ -70,6 +70,8 @@ struct DownloadResult {
 #[derive(Serialize, Deserialize, Clone)]
 struct DownloadRecord {
     source_id: String,
+    #[serde(default)]
+    platform: String,
     owner: String,
     repo: String,
     tag: String,
@@ -204,7 +206,7 @@ async fn download_one(client: reqwest::Client, target: PathBuf, asset: Requested
 #[tauri::command]
 async fn download_release(
     app: tauri::AppHandle, state: tauri::State<'_, ConfigState>,
-    owner: String, repo: String, tag: String, source_id: String, assets: Vec<RequestedAsset>,
+    owner: String, repo: String, tag: String, source_id: String, platform: String, assets: Vec<RequestedAsset>,
 ) -> Result<DownloadResult, String> {
     if owner.is_empty() || repo.is_empty() || owner.contains('/') || repo.contains('/') { return Err("Invalid repository coordinates.".into()); }
     if assets.is_empty() { return Err("This release has no downloadable assets.".into()); }
@@ -223,9 +225,9 @@ async fn download_release(
     }
     if saved.is_empty() { return Err(errors.join("\n")); }
     let mut manifest = read_manifest(&app);
-    manifest.records.retain(|r| !(r.source_id == source_id && r.tag == tag));
+    manifest.records.retain(|r| !(r.source_id == source_id && r.tag == tag && r.platform == platform));
     manifest.records.push(DownloadRecord {
-        source_id: source_id.clone(), owner: owner.clone(), repo: repo.clone(), tag: tag.clone(),
+        source_id: source_id.clone(), platform: platform.clone(), owner: owner.clone(), repo: repo.clone(), tag: tag.clone(),
         folder: target.to_string_lossy().to_string(), files: saved.clone(),
         completed_at: chrono_like_timestamp(), extracted_folder: None,
     });
@@ -278,6 +280,23 @@ fn extract_archive(app: tauri::AppHandle, source_id: String, tag: String, archiv
     }
     write_manifest(&app, &manifest)?;
     Ok(dest.to_string_lossy().to_string())
+}
+
+
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    let parsed = reqwest::Url::parse(&url).map_err(|e| format!("Invalid URL: {e}"))?;
+    if parsed.scheme() != "https" || parsed.host_str() != Some("github.com") {
+        return Err("Only HTTPS GitHub URLs are allowed.".into());
+    }
+    open::that(parsed.as_str()).map_err(|e| format!("Could not open browser: {e}"))
+}
+
+#[tauri::command]
+fn open_folder(path: String) -> Result<(), String> {
+    let folder = PathBuf::from(&path);
+    if !folder.is_dir() { return Err(format!("Folder does not exist: {}", folder.display())); }
+    open::that(folder).map_err(|e| format!("Could not open folder in File Explorer: {e}"))
 }
 
 #[tauri::command]
@@ -338,7 +357,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_config, set_base_dir, latest_release, download_release,
             get_download_history, extract_archive, launch_executable,
-            find_executables, remove_download
+            find_executables, remove_download, open_external_url, open_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running KytyPS5 Hub");
