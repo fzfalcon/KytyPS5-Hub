@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KytyPS5 Hub",
+  "version": "0.1.0",
+  "identifier": "com.fzfalcon.kytyps5hub",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "KytyPS5 Hub",
+        "width": 1280,
+        "height": 900,
+        "minWidth": 760,
+        "minHeight": 620,
+        "resizable": true,
+        "center": true,
+        "backgroundColor": "#0b0e14"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost https://avatars.githubusercontent.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src ipc: http://ipc.localhost https://api.github.com https://github.com https://objects.githubusercontent.com https://release-assets.githubusercontent.com;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "shortDescription": "Multi-source KytyPS5 release manager",
+    "longDescription": "Check and download KytyPS5 releases from community and official GitHub repositories.",
+    "category": "Game",
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["English"],
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

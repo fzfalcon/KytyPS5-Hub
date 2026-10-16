@@ -1,0 +1,1 @@
+Tauri bundle icon files belong in this directory. The repository workflow generates the standard Tauri icon set from `app-icon.png` when the file is present. Replace `app-icon.png` with your own square PNG logo to customize the installer icon.
