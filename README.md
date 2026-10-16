@@ -2,11 +2,11 @@
 
 A Windows desktop release manager for three KytyPS5 repositories:
 
-| Display name | GitHub repository |
-|---|---|
-| Wolverine | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) |
-| Astro Bot | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) |
-| Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) |
+| Display name | GitHub repository | Latest releases |
+|---|---|---|
+| Senaxx (Wolverine) | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) | [Releases](https://github.com/Senaxx/KytyPS5/releases) |
+| Jetsku (Astro Bot) | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) | [Releases](https://github.com/Jetsku/KytyPS5/releases) |
+| Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) | [Releases](https://github.com/KytyPS5/KytyPS5/releases) |
 
 ## Features
 
@@ -19,7 +19,7 @@ A Windows desktop release manager for three KytyPS5 repositories:
 
 ## Important behavior and limitations
 
-- This first version checks **published GitHub Releases**. It does not yet discover arbitrary GitHub Actions artifacts or build executables from commits.
+- This version checks **published GitHub Releases**. It does not yet discover arbitrary GitHub Actions artifacts or build executables from commits.
 - Some repositories may have no published releases or no binary assets attached to a release. In that case, the app reports that state instead of mislabeling source archives as runnable emulator builds.
 - The selected release is the latest published release by publication timestamp, whether stable or prerelease. The UI labels the release type.
 - Downloads are saved in `<chosen folder>/<source>/<release tag>/`.
@@ -28,14 +28,14 @@ A Windows desktop release manager for three KytyPS5 repositories:
 
 ## Build without local CMD
 
-1. Create a new GitHub repository named `KytyPS5-Updater`.
+1. Create a GitHub repository named `KytyPS5-Updater`.
 2. Upload the complete contents of this project to the repository's `main` branch.
 3. Open **Actions** and enable workflows if GitHub asks.
 4. Select **Build KytyPS5 Updater for Windows** and click **Run workflow**, or push a commit to `main`.
 5. Open the successful workflow run and download the `KytyPS5-Updater-Windows-x64` artifact.
 6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Updater-Portable.exe`.
 
-The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a package-lock.json is committed, avoiding setup-node cache failures. The Vite TypeScript configuration includes `@types/node` for Node globals such as `process`. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
+The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a `package-lock.json` is committed, avoiding setup-node cache failures. The Vite TypeScript configuration includes `@types/node` for Node globals such as `process`. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
 
 ## Download destination layout
 
@@ -43,9 +43,9 @@ Example when selecting `D:\Emulators\KytyPS5`:
 
 ```text
 D:\Emulators\KytyPS5\
-├── Wolverine\
+├── Senaxx\
 │   └── <release-tag>\
-├── Astro Bot\
+├── Jetsku\
 │   └── <release-tag>\
 └── Official\
     └── <release-tag>\
@@ -68,7 +68,6 @@ The app downloads only HTTPS release assets whose URL host is `github.com`. GitH
 
 MIT. See `LICENSE`.
 
+## Version 0.3.0
 
-## Version 0.2.0 upgrade
-
-See `UPGRADE-NOTES.md` for newly added download history, concurrent downloads, safe ZIP extraction, and executable discovery/launch commands.
+See `UPGRADE-NOTES.md` for the app rename, platform-specific download history, improved opening of release pages and folders, and startup update prompts.
