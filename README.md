@@ -1,87 +1,76 @@
 # KytyPS5 Updater
 
-A Windows desktop release manager for three KytyPS5 repositories.
+**One app. Three sources. All your KytyPS5 builds in one place.**
 
-| Display Name | GitHub Repository | Latest Releases |
-|---|---|---|
-| Senaxx (Wolverine) | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) | [View Releases](https://github.com/Senaxx/KytyPS5/releases) |
-| Jetsku (Astro Bot) | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) | [View Releases](https://github.com/Jetsku/KytyPS5/releases) |
-| Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) | [View Releases](https://github.com/KytyPS5/KytyPS5/releases) |
+KytyPS5 Updater is a Windows desktop application that checks and downloads the latest published KytyPS5 builds from three independent GitHub repositories.
 
 ## Features
 
-- Automatically checks all three repositories when the application starts.
-- Detects the latest published releases, including prereleases.
-- Displays release tags, publication dates, release type, asset count, and approximate download size.
-- Downloads builds into separate folders for each source.
-- Supports Windows x64 and Linux asset filtering.
-- Saves download location settings and download history.
-- Displays startup notifications for new builds.
-- Supports automatic ZIP extraction.
-- Provides options to open download folders and launch detected Windows executables.
-- Supports Windows installer and portable executable builds through GitHub Actions.
+- **Automatic Updates** — Check for new releases when the app starts.
+- **Three Build Sources** — Track Senaxx, Jetsku, and Official KytyPS5 builds.
+- **Platform Selection** — Filter available assets for Windows x64 or Linux.
+- **Fast Downloads** — Download multiple release assets concurrently.
+- **Organized Storage** — Keep each source and release in a separate folder.
+- **Download History** — Track previously downloaded builds.
+- **ZIP Extraction** — Extract supported ZIP archives automatically.
+- **Quick Access** — Open download folders and launch detected Windows executables.
+- **Modern Interface** — Manage your builds through a dark desktop interface.
 
-## Important Behavior and Limitations
+## Supported Sources
 
-- The application checks published GitHub Releases. It does not currently download arbitrary GitHub Actions artifacts or compile builds directly from repository commits.
-- Some repositories may not have published releases or downloadable binaries. The application reports this instead of treating source-code archives as runnable emulator builds.
-- The latest published release may be stable or a prerelease.
-- Platform filtering depends on asset filenames. Use **Show All Assets** when filenames do not clearly identify the platform.
-- Automatic extraction currently supports ZIP archives. Other formats may require manual extraction.
-- The portable executable may require additional Windows runtime dependencies. The installer is recommended for most users.
-- This is an independent community project and is not affiliated with Sony or the KytyPS5 developers.
+| Developer | Build | Repository | Releases |
+|---|---|---|---|
+| Senaxx | Wolverine | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) | [View Releases](https://github.com/Senaxx/KytyPS5/releases) |
+| Jetsku | Astro Bot | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) | [View Releases](https://github.com/Jetsku/KytyPS5/releases) |
+| Official | Upstream | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) | [View Releases](https://github.com/KytyPS5/KytyPS5/releases) |
 
-## Download Destination
+## Download
 
-Choose your preferred drive and parent folder. The application organizes downloads by source and release version.
+**[Download KytyPS5 Updater for Windows](https://github.com/fzfalcon/KytyPS5-Hub/releases/latest)**
 
-Example:
+Download the installer or portable executable from the latest release's **Assets** section.
+
+## How to Use
+
+1. Install or launch KytyPS5 Updater.
+2. Choose a download location on your preferred drive.
+3. Select your platform. Windows x64 is the default.
+4. Check the available releases.
+5. Download the build you want.
+6. Open the downloaded folder or launch a detected Windows executable.
+
+## Download Organization
+
+Builds are stored separately for each developer and release version.
 
 ```text
-D:\Emulators\KytyPS5\
-├── Senaxx\
-│   └── <release-tag>\
-├── Jetsku\
-│   └── <release-tag>\
-└── Official\
-    └── <release-tag>\
+KytyPS5/
+├── Senaxx/
+│   └── <release-version>/
+├── Jetsku/
+│   └── <release-version>/
+└── Official/
+    └── <release-version>/
 ```
 
-Each source has its own folder, with downloaded assets organized by release tag.
+## Important Notes
 
-## Build with GitHub Actions
+- Available downloads depend on the assets published by each repository.
+- Platform detection depends on asset filenames. Use the all-assets option when a platform cannot be identified clearly.
+- Automatic extraction currently supports ZIP archives.
+- Linux builds can be downloaded, but this Windows application does not launch Linux executables.
+- Only download and run files from sources you trust.
 
-1. Upload the project files to your GitHub repository.
-2. Open the **Actions** tab.
-3. Select **Build KytyPS5 Updater for Windows**.
-4. Run the workflow and wait for it to finish.
-5. Download the generated Windows installer or portable executable from the workflow artifacts.
+## Disclaimer
 
-The application is designed to build on GitHub-hosted Windows runners without requiring a local CMD build.
+KytyPS5 Updater is an independent community project. It is not affiliated with, endorsed by, or officially supported by Sony or the maintainers of the repositories listed above.
 
-## Technology Stack
-
-- **Desktop Framework:** Tauri 2
-- **Backend:** Rust
-- **Frontend:** React, TypeScript, and Vite
-- **Release Information:** GitHub REST API
-- **Build Automation:** GitHub Actions
-
-## Security
-
-- Uses the GitHub API to retrieve public release information.
-- Public repository metadata does not require a personal access token, although GitHub API rate limits apply.
-- Only download and launch builds from sources you trust.
-- Review downloaded files before running unfamiliar executables.
+All trademarks and game names belong to their respective owners.
 
 ## License
 
-This project is distributed under the MIT License. See [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).
 
-## Version 0.3.0
+---
 
-Includes the application rename, source-specific download folders, platform-aware download history, startup update prompts, and improvements to release-page and folder opening.
-
-## Tags
-
-#KytyPS5 #KytyPS5Updater #PS5Emulator #PlayStation5 #Wolverine #AstroBot #Windows #Linux #OpenSource #GitHub #Gaming #Emulation
+**Tags:** #KytyPS5 #KytyPS5Updater #PS5Emulator #Wolverine #AstroBot #Windows #Linux #OpenSource #Gaming #Emulation
