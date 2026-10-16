@@ -1,46 +1,29 @@
-# KytyPS5 Updater
-
-A Windows desktop release manager for three KytyPS5 repositories:
-
-| Display name | GitHub repository | Latest releases |
-|---|---|---|
-| Senaxx (Wolverine) | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) | [Releases](https://github.com/Senaxx/KytyPS5/releases) |
-| Jetsku (Astro Bot) | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) | [Releases](https://github.com/Jetsku/KytyPS5/releases) |
-| Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) | [Releases](https://github.com/KytyPS5/KytyPS5/releases) |
-
-## Features
-
-- Checks all three repositories automatically when the app starts.
-- Detects the most recently published non-draft release, including prereleases.
-- Shows release tag, date, stable/prerelease status, asset count, and approximate total size.
-- Downloads release assets to separate folders under a user-selected parent folder.
-- Saves the parent folder setting in the app configuration directory.
-- GitHub Actions builds a Windows x64 NSIS installer and a portable executable artifact.
-
-## Important behavior and limitations
-
-- This version checks **published GitHub Releases**. It does not yet discover arbitrary GitHub Actions artifacts or build executables from commits.
-- Some repositories may have no published releases or no binary assets attached to a release. In that case, the app reports that state instead of mislabeling source archives as runnable emulator builds.
-- The selected release is the latest published release by publication timestamp, whether stable or prerelease. The UI labels the release type.
-- Downloads are saved in `<chosen folder>/<source>/<release tag>/`.
-- The portable executable may need Microsoft Visual C++ runtime dependencies available on the target Windows system. The installer is the recommended first choice.
-- This is a community utility, not an official Sony or KytyPS5 project. Repository names and game names are used only to identify source feeds.
-
-## Build without local CMD
-
-1. Create a GitHub repository named `KytyPS5-Updater`.
-2. Upload the complete contents of this project to the repository's `main` branch.
-3. Open **Actions** and enable workflows if GitHub asks.
-4. Select **Build KytyPS5 Updater for Windows** and click **Run workflow**, or push a commit to `main`.
-5. Open the successful workflow run and download the `KytyPS5-Updater-Windows-x64` artifact.
-6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Updater-Portable.exe`.
-
-The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a `package-lock.json` is committed, avoiding setup-node cache failures. The Vite TypeScript configuration includes `@types/node` for Node globals such as `process`. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
-
-## Download destination layout
-
-Example when selecting `D:\Emulators\KytyPS5`:
-
+KytyPS5 Updater
+A Windows desktop release manager for three KytyPS5 repositories.
+Display name	GitHub repository	Latest releases
+Senaxx (Wolverine)	Senaxx/KytyPS5	Releases
+Jetsku (Astro Bot)	Jetsku/KytyPS5	Releases
+Official	KytyPS5/KytyPS5	Releases
+Features
+Checks all three repositories automatically when the app starts.
+Detects the latest published release, including prereleases.
+Shows release tags, publication dates, release type, asset count, and approximate total size.
+Downloads assets into separate folders for each source.
+Supports Windows x64 and Linux asset filtering.
+Saves download location settings and download history.
+Provides a startup prompt when new builds are detected.
+Supports ZIP extraction, opening download folders, and launching detected Windows executables.
+Provides a Windows x64 installer and portable executable through GitHub Actions.
+Important Behavior and Limitations
+The application checks published GitHub Releases. It does not currently retrieve arbitrary GitHub Actions artifacts or automatically compile builds from repository commits.
+Some repositories may have no published releases or downloadable binaries. The app reports this instead of presenting source-code archives as runnable emulator builds.
+The latest published release may be a stable release or a prerelease.
+Platform filtering depends on asset filenames. Use Show all assets when filenames do not clearly identify the platform.
+Automatic extraction currently supports ZIP archives. Other formats may need to be extracted manually.
+The portable executable may require additional Windows runtime dependencies. The installer is recommended for most users.
+This is an independent community utility and is not affiliated with Sony or the KytyPS5 developers.
+Download Destination Layout
+For example, when selecting `D:\Emulators\KytyPS5`:
 ```text
 D:\Emulators\KytyPS5\
 ├── Senaxx\
@@ -50,24 +33,25 @@ D:\Emulators\KytyPS5\
 └── Official\
     └── <release-tag>\
 ```
-
-Each asset is downloaded into the matching release-tag folder. Existing files with the same filename in that same release folder are replaced only after the new download has completed.
-
-## Stack
-
-- Tauri 2 + Rust
-- React + TypeScript + Vite
-- GitHub REST API
-- GitHub Actions (Windows x64)
-
-## Repository security
-
-The app downloads only HTTPS release assets whose URL host is `github.com`. GitHub may redirect the request to its asset delivery host; if a repository's asset URL requires a different redirect flow, the downloader may need adjustment. No GitHub token is required for public repository release metadata; unauthenticated API rate limits apply.
-
-## License
-
-MIT. See `LICENSE`.
-
-## Version 0.3.0
-
-See `UPGRADE-NOTES.md` for the app rename, platform-specific download history, improved opening of release pages and folders, and startup update prompts.
+Each source has its own folder, with downloaded assets organized by release tag. Incomplete downloads should not be treated as completed builds.
+Technology Stack
+Tauri 2 + Rust
+React + TypeScript + Vite
+GitHub REST API
+GitHub Actions for Windows x64 builds
+Build with GitHub Actions
+Upload the project to your GitHub repository.
+Open the Actions tab.
+Select Build KytyPS5 Updater for Windows.
+Run the workflow and wait for it to complete.
+Download the generated Windows installer or portable executable from the workflow artifacts.
+No local Windows CMD build is required. Successful compilation and runtime testing should be completed before publishing a stable release.
+Repository Security
+The application uses the GitHub API to retrieve public release information. Public repository metadata does not require a personal access token, although GitHub's unauthenticated API rate limits apply.
+Only download and launch builds from sources you trust.
+License
+MIT License. See LICENSE.
+Version 0.3.0
+This version includes the application rename, source-specific folders, platform-aware download history, startup update prompts, and improvements to release-page and folder opening.
+Tags
+#KytyPS5 #KytyPS5Updater #PS5Emulator #PlayStation5 #Wolverine #AstroBot #Windows #Linux #OpenSource #GitHub #Gaming #Emulation
