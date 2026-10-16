@@ -41,7 +41,7 @@ type Source = {
 type AppConfig = { base_dir: string | null };
 type DownloadResult = { saved_files: string[]; folder: string; message: string };
 type DownloadRecord = {
-  source_id: string; owner: string; repo: string; tag: string; folder: string;
+  source_id: string; platform: string; owner: string; repo: string; tag: string; folder: string;
   files: string[]; completed_at: string; extracted_folder: string | null;
 };
 type DownloadManifest = { records: DownloadRecord[] };
