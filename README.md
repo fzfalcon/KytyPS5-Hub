@@ -35,7 +35,7 @@ A Windows desktop release manager for three KytyPS5 repositories:
 5. Open the successful workflow run and download the `KytyPS5-Hub-Windows-x64` artifact.
 6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Hub-Portable.exe`.
 
-The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
+The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a package-lock.json is committed, avoiding setup-node cache failures. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
 
 ## Download destination layout
 
