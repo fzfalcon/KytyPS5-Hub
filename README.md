@@ -1,74 +1,91 @@
-# KytyPS5 Updater
+# PS4&5onPC Hub
 
-A Windows desktop release manager for three KytyPS5 repositories:
+**Native PC ports, PS4/PS5 development builds, emulators and compatibility projects in one place.**
 
-| Display name | GitHub repository |
+PS4&5onPC Hub is a community project catalog and release updater for Windows. It checks the latest published releases from curated public GitHub sources and organizes downloads by project and release.
+
+## Explore
+
+- **PS4 PC Ports:** Native PC port projects and maintained forks for PS4-origin games, including P.T. and Bloodborne.
+- **PS5 Development:** KytyPS5, game-specific community builds, AnyPS5, prosper and related compatibility-layer research.
+- **Emulators & Tools:** shadPS4, fpPS4, Kyty and other related PC projects.
+- **Live release checks:** Release tags, dates, prerelease status, assets and download links from GitHub.
+- **One library:** Search sources, filter assets by platform, store versions separately, extract supported ZIP files, and open downloaded folders.
+
+## Current Source Catalog
+
+### PS4 Native PC Port Projects
+
+| Project | Source |
 |---|---|
-| Wolverine | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) |
-| Astro Bot | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) |
-| Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) |
+| P.T. PC Port | [LoreanXavier/pt-pc](https://github.com/LoreanXavier/pt-pc) |
+| Bloodborne Linux upstream | [deadinside28/bloodborne_pc](https://github.com/deadinside28/bloodborne_pc) |
+| Bloodborne Windows | [Supermedo/bloodborne_pc](https://github.com/Supermedo/bloodborne_pc) |
+| BloodBorneButPc | [Awakenchan/BloodBorneButPc](https://github.com/Awakenchan/BloodBorneButPc) |
+| Bloodborne Win32 port | [Mrsuss60/bloodborne_pc_windows_port](https://github.com/Mrsuss60/bloodborne_pc_windows_port) |
+| Bloodborne setup fork | [Jgamrot/bloodborne_pc](https://github.com/Jgamrot/bloodborne_pc) |
+| Bloodborne Crowned Workshop | [TatsunaKyo/bloodborne_pc](https://github.com/TatsunaKyo/bloodborne_pc) |
+| bbhost | [droogie/bbhost](https://github.com/droogie/bbhost) |
+| Bloodborne Linux fork | [ayozetr/bloodborne_linux](https://github.com/ayozetr/bloodborne_linux) |
+| Bloodborne macOS source | [Wooloomooloo2/bloodborne_mac_port](https://github.com/Wooloomooloo2/bloodborne_mac_port) |
+| Bloodborne achievement fork | [pyL1nx/bloodborne_pc](https://github.com/pyL1nx/bloodborne_pc) |
 
-## Features
+### PS5 Development
 
-- Checks all three repositories automatically when the app starts.
-- Detects the most recently published non-draft release, including prereleases.
-- Shows release tag, date, stable/prerelease status, asset count, and approximate total size.
-- Downloads release assets to separate folders under a user-selected parent folder.
-- Saves the parent folder setting in the app configuration directory.
-- GitHub Actions builds a Windows x64 NSIS installer and a portable executable artifact.
+| Project | Source |
+|---|---|
+| KytyPS5 Official | [KytyPS5/KytyPS5](https://github.com/KytyPS5/KytyPS5) |
+| Senaxx — Wolverine builds | [Senaxx/KytyPS5](https://github.com/Senaxx/KytyPS5) |
+| Jetsku — Astro Bot and compatibility builds | [Jetsku/KytyPS5](https://github.com/Jetsku/KytyPS5) |
+| AnyPS5 | [boykopovar/AnyPS5](https://github.com/boykopovar/AnyPS5) |
+| prosper | [mattias800/prosper](https://github.com/mattias800/prosper) |
+| prosperNG | [snapetech-org/prosperNG](https://github.com/snapetech-org/prosperNG) |
 
-## Important behavior and limitations
+### Emulators & Tools
 
-- This first version checks **published GitHub Releases**. It does not yet discover arbitrary GitHub Actions artifacts or build executables from commits.
-- Some repositories may have no published releases or no binary assets attached to a release. In that case, the app reports that state instead of mislabeling source archives as runnable emulator builds.
-- The selected release is the latest published release by publication timestamp, whether stable or prerelease. The UI labels the release type.
-- Downloads are saved in `<chosen folder>/<source>/<release tag>/`.
-- The portable executable may need Microsoft Visual C++ runtime dependencies available on the target Windows system. The installer is the recommended first choice.
-- This is a community utility, not an official Sony or KytyPS5 project. Repository names and game names are used only to identify source feeds.
+| Project | Source |
+|---|---|
+| shadPS4 | [shadps4-emu/shadPS4](https://github.com/shadps4-emu/shadPS4) |
+| fpPS4 | [red-prig/fpPS4](https://github.com/red-prig/fpPS4) |
+| Kyty | [InoriRus/Kyty](https://github.com/InoriRus/Kyty) |
 
-## Build without local CMD
+## How it works
 
-1. Create a new GitHub repository named `KytyPS5-Updater`.
-2. Upload the complete contents of this project to the repository's `main` branch.
-3. Open **Actions** and enable workflows if GitHub asks.
-4. Select **Build KytyPS5 Updater for Windows** and click **Run workflow**, or push a commit to `main`.
-5. Open the successful workflow run and download the `KytyPS5-Updater-Windows-x64` artifact.
-6. Extract the artifact ZIP. Install using the NSIS `.exe`, or try `KytyPS5-Updater-Portable.exe`.
+1. Open the app and let it check the configured public GitHub sources.
+2. Browse by PS4 PC ports, PS5 development, or emulators and tools.
+3. Search by game, project, developer, or repository.
+4. Select Windows x64, Linux x64, macOS, or show all available assets.
+5. Download a release and manage it from the project card or recent-downloads list.
 
-The workflow uses GitHub-hosted Windows runners; no local Windows compiler or CMD build is needed. npm caching is intentionally disabled until a package-lock.json is committed, avoiding setup-node cache failures. The Vite TypeScript configuration includes `@types/node` for Node globals such as `process`. The workflow needs repository Actions permission to write release assets when a `v*` tag is pushed.
+## Important Notes
 
-## Download destination layout
+- Source metadata and release tags are fetched live from GitHub; a listed release is not a guarantee that its build is playable.
+- Some projects publish source code or CI builds without a tagged release. Those sources may have no downloadable release in the app; use the linked repository for current development details.
+- Native PC ports, emulators, and console-side ports are different project types. The catalog labels them separately to avoid implying they work the same way.
+- Platform detection is based on asset filenames. Review ambiguous filenames before downloading.
+- Automatic extraction currently supports ZIP archives. Other formats may need manual extraction.
+- Some native PC ports require game data from your own legally obtained copy. The app does not distribute game assets, firmware, keys, or copyrighted game files.
+- The catalog is curated from public GitHub projects and Reddit community discussions. Forks may be experimental, unverified, inactive, or superseded by another branch.
+- This is an independent community project and is not affiliated with Sony or the listed developers.
 
-Example when selecting `D:\Emulators\KytyPS5`:
+## Community Sources
 
-```text
-D:\Emulators\KytyPS5\
-├── Wolverine\
-│   └── <release-tag>\
-├── Astro Bot\
-│   └── <release-tag>\
-└── Official\
-    └── <release-tag>\
-```
+- [r/BloodbornePC](https://www.reddit.com/r/BloodbornePC/) — Bloodborne native-PC project and fork discussions.
+- [r/emulators](https://www.reddit.com/r/emulators/) — emulator and compatibility-layer discussions.
+- [r/ps4homebrew](https://www.reddit.com/r/ps4homebrew/) — PS4 console-side ports and homebrew. These are not necessarily PC ports.
+- [AnyPS5 compatibility notes](https://anyps5.dev/) — community reports for PS5-on-PC projects.
 
-Each asset is downloaded into the matching release-tag folder. Existing files with the same filename in that same release folder are replaced only after the new download has completed.
-
-## Stack
+## Technology
 
 - Tauri 2 + Rust
 - React + TypeScript + Vite
 - GitHub REST API
-- GitHub Actions (Windows x64)
-
-## Repository security
-
-The app downloads only HTTPS release assets whose URL host is `github.com`. GitHub may redirect the request to its asset delivery host; if a repository's asset URL requires a different redirect flow, the downloader may need adjustment. No GitHub token is required for public repository release metadata; unauthenticated API rate limits apply.
+- GitHub Actions for Windows x64 builds
 
 ## License
 
-MIT. See `LICENSE`.
+MIT License. See [LICENSE](LICENSE).
 
+## Tags
 
-## Version 0.2.0 upgrade
-
-See `UPGRADE-NOTES.md` for newly added download history, concurrent downloads, safe ZIP extraction, and executable discovery/launch commands.
+#PS4and5onPC #PS4onPC #PS5onPC #NativePCPorts #BloodbornePC #PTPCPort #KytyPS5 #AnyPS5 #shadPS4 #Emulation #GamePreservation #OpenSource

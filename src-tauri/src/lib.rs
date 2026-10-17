@@ -164,16 +164,27 @@ fn safe_component(value: &str) -> String {
     let trimmed = clean.trim_matches(['.', ' ']);
     if trimmed.is_empty() { "release".to_string() } else { trimmed.to_string() }
 }
-fn source_folder(source_id: &str) -> Result<&'static str, String> {
-    match source_id {
-        "wolverine" => Ok("Senaxx"),
-        "astro-bot" => Ok("Jetsku"),
-        "official" => Ok("Official"),
-        _ => Err("Unknown source identifier.".into()),
+fn source_folder(source_id: &str) -> Result<String, String> {
+    let folder = match source_id {
+        "wolverine" => "Senaxx".to_string(),
+        "astro-bot" => "Jetsku".to_string(),
+        "official" => "Official".to_string(),
+        _ => safe_component(source_id),
+    };
+    if folder.is_empty() || folder == "." || folder == ".." {
+        return Err("Invalid source identifier.".into());
     }
+    Ok(folder)
 }
-fn ensure_child(base: &Path, source_id: &str, tag: &str) -> Result<PathBuf, String> {
-    let target = base.join(source_folder(source_id)?).join(safe_component(tag));
+fn ensure_child(base: &Path, source_id: &str, tag: &str, platform: &str) -> Result<PathBuf, String> {
+    let platform_dir = match platform {
+        "windows" => "Windows",
+        "linux" => "Linux",
+        "macos" => "macOS",
+        "all" => "All-assets",
+        _ => return Err("Unknown platform selector.".into()),
+    };
+    let target = base.join(source_folder(source_id)?).join(safe_component(tag)).join(platform_dir);
     fs::create_dir_all(&target).map_err(|e| format!("Cannot create destination folder: {e}"))?;
     Ok(target)
 }
@@ -212,7 +223,7 @@ async fn download_release(
     if assets.is_empty() { return Err("This release has no downloadable assets.".into()); }
     let base = state.0.lock().map_err(|_| "Settings lock unavailable".to_string())?.base_dir.clone()
         .ok_or_else(|| "Choose a download folder in Settings first.".to_string())?;
-    let target = ensure_child(Path::new(&base), &source_id, &tag)?;
+    let target = ensure_child(Path::new(&base), &source_id, &tag, &platform)?;
     let client = github_client()?;
     // Up to three assets are downloaded concurrently to improve throughput without overwhelming hosts.
     let results: Vec<Result<String, String>> = stream::iter(assets.into_iter().map(|asset| {
@@ -286,8 +297,10 @@ fn extract_archive(app: tauri::AppHandle, source_id: String, tag: String, archiv
 #[tauri::command]
 fn open_external_url(url: String) -> Result<(), String> {
     let parsed = reqwest::Url::parse(&url).map_err(|e| format!("Invalid URL: {e}"))?;
-    if parsed.scheme() != "https" || parsed.host_str() != Some("github.com") {
-        return Err("Only HTTPS GitHub URLs are allowed.".into());
+    let host = parsed.host_str().unwrap_or_default();
+    let allowed = ["github.com", "www.github.com", "reddit.com", "www.reddit.com", "anyps5.dev", "www.anyps5.dev", "anyps5games.com", "www.anyps5games.com"];
+    if parsed.scheme() != "https" || !allowed.contains(&host) {
+        return Err("Only approved HTTPS project and Reddit URLs are allowed.".into());
     }
     open::that(parsed.as_str()).map_err(|e| format!("Could not open browser: {e}"))
 }

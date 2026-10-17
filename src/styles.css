@@ -8,3 +8,52 @@
 .repo-link-button{border:0;background:transparent;padding:0;cursor:pointer;text-align:left;font:inherit;width:100%}.repo-link-button:hover{color:#c4bdff}
 
 .startup-update-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #252b36}.startup-update-row:last-of-type{border-bottom:0}.startup-update-info{min-width:0;display:flex;flex-direction:column;gap:5px}.startup-update-info strong{font-size:11px;color:#e1e6f1}.startup-update-info span{font-size:10px;color:#a0abc0;overflow-wrap:anywhere}.startup-update-info small{font-size:9px;color:#7a879b}
+
+/* PS4&5onPC Hub v0.4.0 catalog additions */
+.nav-item{width:100%;border:0;text-align:left;background:transparent;font:inherit;position:relative}
+.nav-count{margin-left:auto;color:#737f93;font-size:9px;background:#171d28;border:1px solid #293141;border-radius:5px;padding:3px 5px}
+.nav-console-logo{font:700 10px 'Space Grotesk',sans-serif;letter-spacing:-.3px;min-width:25px;display:inline-flex;justify-content:center}
+.ps4-logo{color:#86b8ff}.ps5-logo{color:#b4a8ff}.tools-logo{color:#72d9ac}
+.hero-unified{min-height:225px}
+.hero-console-logos{position:relative;z-index:1;display:flex;gap:11px;flex-shrink:0}
+.console-tile{width:145px;min-height:137px;border:1px solid #393e53;border-radius:13px;background:#111724e8;color:#e7ebf5;padding:14px;display:flex;align-items:flex-start;flex-direction:column;justify-content:flex-end;text-align:left;transition:transform .16s,border-color .16s}
+.console-tile:hover{transform:translateY(-2px);border-color:#7c80c6}
+.ps4-tile{background:linear-gradient(145deg,#17253a,#111620)}
+.ps5-tile{background:linear-gradient(145deg,#25203c,#111620)}
+.console-mark{font:700 27px 'Space Grotesk',sans-serif;letter-spacing:-1px;margin-bottom:auto;color:#8ebfff;text-shadow:0 0 24px #5f99ff24}
+.ps5-tile .console-mark{color:#b4a5ff}
+.console-tile strong{font:600 11px 'Space Grotesk',sans-serif;margin-bottom:4px}
+.console-tile small{font-size:9px;line-height:1.5;color:#8490a4}
+.update-ribbon{display:flex;align-items:center;gap:12px;border:1px solid #2b3243;background:linear-gradient(90deg,#171d2a,#131923);border-radius:11px;padding:12px 15px;margin:0 0 28px}
+.update-ribbon-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:9px;background:#272642;color:#b1a7ff;flex-shrink:0}
+.update-ribbon-copy{min-width:0;flex:1}
+.update-ribbon-copy strong{display:block;font-size:11px;color:#e2e7f2;font-weight:600}
+.update-ribbon-copy span{display:block;font-size:9px;color:#7e8ba0;margin-top:4px}
+.ribbon-meta{font-size:9px;color:#77849a;white-space:nowrap}
+.search-control{display:flex;align-items:center;gap:7px;background:#171d28;border:1px solid #333b4b;color:#8592a8;border-radius:7px;padding:8px 10px;min-width:205px}
+.search-control input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:#e5eaf4;font:inherit;font-size:10px}
+.search-control input::placeholder{color:#6f7b8f}
+.source-platform{display:flex;align-items:center;gap:5px;font-size:9px;color:#77869b;margin-top:6px}
+.catalog-console{min-width:43px;height:33px;display:grid;place-items:center;border-radius:8px;background:#1d2634;border:1px solid #313a4c;font:700 11px 'Space Grotesk',sans-serif;letter-spacing:-.3px}
+.catalog-console.ps4-logo{background:#1a2a40;border-color:#2a4563;color:#85bdff}
+.catalog-console.ps5-logo{background:#292441;border-color:#403663;color:#b6a8ff}
+.catalog-console.tools-logo{background:#183128;border-color:#2a4b3b;color:#79ddb0;font-size:8px}
+.source-card.ps4:before{background:linear-gradient(90deg,transparent,#6baeff,transparent)}
+.source-card.ps5:before{background:linear-gradient(90deg,transparent,#a99aff,transparent)}
+.source-card.tools:before{background:linear-gradient(90deg,transparent,#74d9ad,transparent)}
+.source-card.green{--accent:#71dca9}
+.community-panel{margin-top:16px;padding:17px;border:1px solid #252c38;border-radius:12px;background:#11151d}
+.community-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}
+.community-link{display:flex;align-items:center;gap:9px;padding:12px 10px;min-width:0;text-align:left;background:#0d1118;border:1px solid #282f3c;border-radius:9px;color:#99a5b8}
+.community-link:hover{border-color:#4c5270;background:#141a24}
+.community-link>span:nth-child(2){min-width:0;flex:1}
+.community-link strong{display:block;color:#d9dfeb;font-size:10px;font-weight:600}
+.community-link small{display:block;color:#718096;font-size:9px;line-height:1.4;margin-top:4px}
+.community-platform{font:700 10px 'Space Grotesk',sans-serif;color:#86b8ff;background:#1a2a40;border-radius:6px;padding:7px 5px;flex-shrink:0}
+.community-platform.ps5-logo{color:#b4a8ff;background:#292441}
+.empty-catalog{padding:42px 15px;margin:12px 0;display:flex;align-items:center;flex-direction:column;gap:8px;background:#11151d;border:1px dashed #333b4b;border-radius:12px;color:#76839a;font-size:10px}
+.empty-catalog strong{font-size:13px;color:#dfe4ee}
+.empty-catalog .button{margin-top:6px}
+@media(max-width:1100px){.hero-console-logos{gap:7px}.console-tile{width:126px;padding:11px}.search-control{min-width:165px}.community-links{grid-template-columns:1fr}}
+@media(max-width:850px){.hero-console-logos{opacity:.95}.hero-unified{align-items:flex-start}.console-tile{width:118px;min-height:118px}.update-ribbon{align-items:flex-start}.ribbon-meta{display:none}}
+@media(max-width:560px){.hero-console-logos{position:absolute;right:-38px;bottom:10px;opacity:.18;pointer-events:none;transform:scale(.8);transform-origin:right bottom}.hero-unified{padding-right:18px}.update-ribbon{padding:10px}.update-ribbon-copy strong{line-height:1.6}.section-controls{width:100%}.search-control{width:100%;min-width:0}.community-links{grid-template-columns:1fr}.nav-count{display:none}}

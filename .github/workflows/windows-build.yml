@@ -1,4 +1,4 @@
-name: Build KytyPS5 Updater for Windows
+name: Build PS4&5onPC Hub for Windows
 
 on:
   workflow_dispatch:
@@ -47,9 +47,9 @@ jobs:
       - name: Stage portable executable
         run: |
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          $exe = Get-ChildItem -Path "src-tauri/target/release" -Filter "kytyps5-updater.exe" -Recurse | Select-Object -First 1
-          if (-not $exe) { throw "Could not find kytyps5-hub.exe" }
-          Copy-Item $exe.FullName "artifacts/KytyPS5-Updater-Portable.exe"
+          $exe = Get-ChildItem -Path "src-tauri/target/release" -Filter "ps4and5onpc-hub.exe" -Recurse | Select-Object -First 1
+          if (-not $exe) { throw "Could not find ps4and5onpc-hub.exe" }
+          Copy-Item $exe.FullName "artifacts/PS4and5onPC-Hub-Portable.exe"
           Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter "*.exe" | ForEach-Object {
             Copy-Item $_.FullName "artifacts/"
           }
@@ -58,7 +58,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: KytyPS5-Updater-Windows-x64
+          name: PS4and5onPC-Hub-Windows-x64
           path: artifacts/*
           if-no-files-found: error
           retention-days: 30
